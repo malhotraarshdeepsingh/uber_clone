@@ -10,6 +10,9 @@ const cors = require('cors')
 // allowing requests from everywhere
 app.use(cors())
 
+const connectTDB = require('./utils/db')
+connectTDB()
+
 // route to test if server is running
 app.get('/',(req, res) => {
     res.send('Hello, Express!')
