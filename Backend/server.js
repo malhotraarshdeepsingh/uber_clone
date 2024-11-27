@@ -3,7 +3,7 @@ const app = require('./app');
 
 const port = process.env.PORT || 3000;
 
-// giveing app instance to http to create a new server
+// giveing app instance to http to create a new
 const server = http.createServer(app);
 
 server.listen(port,()=>{
