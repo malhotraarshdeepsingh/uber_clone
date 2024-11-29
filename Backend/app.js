@@ -26,8 +26,10 @@ connectTDB();
 
 // Importing routes
 const userRoutes = require("./routes/user.routes");
+const captainRoutes = require("./routes/captain.routes");
 
 // Using routes
 app.use('/api/users', userRoutes);
+app.use('/api/captains', captainRoutes)
 
 module.exports = app;
