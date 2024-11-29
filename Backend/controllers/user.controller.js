@@ -14,22 +14,30 @@ module.exports.registerUser = async (req, res, next) => {
 
   const { fullName, email, password } = req.body;
 
-  // to hash the password
-  const hashedPassword = await userModel.hashPassword(password);
-
-  // then save the new user in db
-  const newUser = await userService.createUser({
-    firstName: fullName.firstName,
-    lastName: fullName.lastName,
-    email,
-    password: hashedPassword,
-  });
-
-  // generate auth token for user
-  const authtoken = newUser.generateAuthToken();
-
-  // send the user and token back to client
-  res.status(201).json({ user: newUser, authtoken });
+  try {
+    // to hash the password
+    const hashedPassword = await userModel.hashPassword(password);
+  
+    // then save the new user in db
+    const newUser = await userService.createUser({
+      firstName: fullName.firstName,
+      lastName: fullName.lastName,
+      email,
+      password: hashedPassword,
+    });
+  
+    // generate auth token for user
+    const authtoken = newUser.generateAuthToken();
+  
+    // remove password from user response before sending it back to client
+    const userResponse = newUser.toObject();
+    delete userResponse.password;
+  
+    // send the user and token back to client
+    res.status(201).json({ user: userResponse, authtoken });
+  } catch (error) {
+    return res.status(500).json({error: error || "Internal Server Error"}); 
+  }
 };
 
 module.exports.loginUser = async (req, res, next) => {
@@ -41,19 +49,26 @@ module.exports.loginUser = async (req, res, next) => {
 
   const { email, password } = req.body;
 
-  // find user by email and extract password from db
-  const user = await userModel.findOne({ email }).select("+password");
-  if (!user) {
-    return res.status(401).json({ message: "Invalid credentials" });
+  try {
+    // find user by email and extract password from db
+    const user = await userModel.findOne({ email }).select("+password");
+    if (!user) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+  
+    // compare the password from request with the password in db
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+  
+    // remove password from user response before sending it back to client
+    const userResponse = user.toObject();
+    delete userResponse.password;
+  
+    const authtoken = await user.generateAuthToken();
+    res.status(200).json({ authtoken, user: userResponse });
+  } catch (error) {
+    return res.status(500).json({error: error || "Internal Server Error"});
   }
-
-  // compare the password from request with the password in db
-  const isMatch = await user.comparePassword(password);
-  if (!isMatch) {
-    return res.status(401).json({ message: "Invalid credentials" });
-  }
-
-
-  const authtoken = await user.generateAuthToken();
-  res.status(200).json({ authtoken, user: userResponse });
 };
