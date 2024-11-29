@@ -10,6 +10,12 @@ const cors = require("cors");
 // allowing requests from everywhere
 app.use(cors());
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+const cookieParser = require("cookie-parser");
+app.use(cookieParser());
+
 const connectTDB = require("./utils/db");
 connectTDB();
 
@@ -20,9 +26,6 @@ connectTDB();
 
 // Importing routes
 const userRoutes = require("./routes/user.routes");
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // Using routes
 app.use('/api/users', userRoutes);
